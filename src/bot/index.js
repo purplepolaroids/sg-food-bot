@@ -19,18 +19,15 @@ if (!process.env.TELEGRAM_BOT_TOKEN) {
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
-// ─── Commands ─────────────────────────────────────────────────────────────────
-
 bot.command('start', async (ctx) => {
   await ctx.reply(
-    '🍜 *SG Food Bot*\n\nYour personal Singapore food assistant\\.\n\n' +
-    '*/eat* — Find somewhere to eat\n' +
-    '*/random* — Surprise me\\!\n' +
-    '*/toprated* — My best picks\n' +
-    '*/save* — Add a new restaurant\n' +
-    '*/cravings* \\[text\\] — Tell me what you feel like\n\n' +
-    'Or just type what you\'re craving\\.',
-    { parse_mode: 'MarkdownV2' }
+    '🍜 SG Food Bot\n\nYour personal Singapore food assistant.\n\n' +
+    '/eat — Find somewhere to eat\n' +
+    '/random — Surprise me!\n' +
+    '/toprated — My best picks\n' +
+    '/save — Add a new restaurant\n' +
+    '/cravings [text] — Tell me what you feel like\n\n' +
+    'Or just type what you\'re craving.'
   );
 });
 
@@ -44,8 +41,7 @@ bot.command('cravings', async (ctx) => {
   await handleCravings(ctx, text);
 });
 
-// ─── /eat callbacks ───────────────────────────────────────────────────────────
-
+// /eat callbacks
 bot.action(/^eatregion:(.+)$/, async (ctx) => {
   try { await handleRegion(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
   await ctx.answerCbQuery().catch(() => {});
@@ -63,22 +59,19 @@ bot.action(/^eathunger:(.+)$/, async (ctx) => {
   await ctx.answerCbQuery().catch(() => {});
 });
 
-// ─── /random callbacks ────────────────────────────────────────────────────────
-
+// /random callbacks
 bot.action(/^randomregion:(.+)$/, async (ctx) => {
   try { await handleRandomRegion(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
   await ctx.answerCbQuery().catch(() => {});
 });
 
-// ─── /toprated callbacks ──────────────────────────────────────────────────────
-
+// /toprated callbacks
 bot.action(/^topregion:(.+)$/, async (ctx) => {
   try { await handleTopRatedRegion(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
   await ctx.answerCbQuery().catch(() => {});
 });
 
-// ─── /save callbacks ──────────────────────────────────────────────────────────
-
+// /save callbacks
 bot.action(/^saveregion:(.+)$/, async (ctx) => {
   try { await handleSaveRegion(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
   await ctx.answerCbQuery().catch(() => {});
@@ -104,36 +97,9 @@ bot.action(/^savevibe:(.+)$/, async (ctx) => {
   await ctx.answerCbQuery().catch(() => {});
 });
 
-// ─── Free text ────────────────────────────────────────────────────────────────
-
+// Free text
 bot.on('text', async (ctx) => {
   const text = ctx.message.text?.trim();
   if (!text || text.startsWith('/')) return;
 
-  if (isInSaveFlow(ctx.from.id)) {
-    const handled = await handleSaveText(ctx, text).catch(() => false);
-    if (handled) return;
-  }
-
-  await handleCravings(ctx, text);
-});
-
-// ─── Global error handler ─────────────────────────────────────────────────────
-
-bot.catch((err, ctx) => {
-  console.error(`Unhandled bot error [${ctx?.updateType}]:`, err.message);
-});
-
-// ─── Launch ───────────────────────────────────────────────────────────────────
-
-bot.launch({
-  dropPendingUpdates: true  // clears queued messages on startup — fixes the 409 conflict
-}).then(() => {
-  console.log('🍜 SG Food Bot is running...');
-}).catch(err => {
-  console.error('Failed to launch:', err.message);
-  process.exit(1);
-});
-
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+  if (isInSaveFlow(ctx.f
