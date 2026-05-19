@@ -1,12 +1,21 @@
 // src/bot/commands/toprated.js
+const { Markup } = require('telegraf');
 const { getTopRated } = require('../../notion/client');
 const { formatList } = require('../../formatters/card');
-const { regionKeyboard } = require('../keyboards');
+const { REGIONS } = require('../../utils/constants');
+
+function topRegionKeyboard() {
+  const buttons = REGIONS.map(r => Markup.button.callback(r, `topregion:${r}`));
+  buttons.push(Markup.button.callback('🌍 All regions', 'topregion:any'));
+  const chunks = [];
+  for (let i = 0; i < buttons.length; i += 3) chunks.push(buttons.slice(i, i + 3));
+  return Markup.inlineKeyboard(chunks);
+}
 
 async function startTopRated(ctx) {
   await ctx.reply(
     '⭐ *Top Rated*\n\nFilter by region?',
-    { parse_mode: 'MarkdownV2', ...regionKeyboard() }
+    { parse_mode: 'MarkdownV2', ...topRegionKeyboard() }
   );
 }
 
@@ -24,10 +33,7 @@ async function handleTopRatedRegion(ctx, region) {
       return;
     }
 
-    const title = region === 'any'
-      ? 'Your Top 5 Places ⭐'
-      : `Top 5 in ${region} ⭐`;
-
+    const title = region === 'any' ? 'Your Top 5 Places ⭐' : `Top 5 in ${region} ⭐`;
     const msg = formatList(places, title);
     await ctx.editMessageText(msg, {
       parse_mode: 'MarkdownV2',

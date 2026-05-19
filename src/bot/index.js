@@ -47,46 +47,43 @@ bot.command('cravings', async (ctx) => {
   await handleCravings(ctx, text);
 });
 
-// ─── /eat callback chain ─────────────────────────────────────────────────────
+// ─── /eat callbacks ──────────────────────────────────────────────────────────
 
-bot.action(/^region:(.+)$/, async (ctx) => {
-  const region = ctx.match[1];
-  // Determine context: which command triggered this
-  const session = require('./commands/eat');
-  await handleRegion(ctx, region);
+bot.action(/^eatregion:(.+)$/, async (ctx) => {
+  await handleRegion(ctx, ctx.match[1]);
   await ctx.answerCbQuery();
 });
 
-bot.action(/^price:(.+)$/, async (ctx) => {
+bot.action(/^eatprice:(.+)$/, async (ctx) => {
   await handlePrice(ctx, ctx.match[1]);
   await ctx.answerCbQuery();
 });
 
-bot.action(/^cuisine:(.+)$/, async (ctx) => {
+bot.action(/^eatcuisine:(.+)$/, async (ctx) => {
   await handleCuisine(ctx, ctx.match[1]);
   await ctx.answerCbQuery();
 });
 
-bot.action(/^hunger:(.+)$/, async (ctx) => {
+bot.action(/^eathunger:(.+)$/, async (ctx) => {
   await handleHunger(ctx, ctx.match[1]);
   await ctx.answerCbQuery();
 });
 
-// ─── /random callback chain ───────────────────────────────────────────────────
+// ─── /random callbacks ───────────────────────────────────────────────────────
 
 bot.action(/^randomregion:(.+)$/, async (ctx) => {
   await handleRandomRegion(ctx, ctx.match[1]);
   await ctx.answerCbQuery();
 });
 
-// ─── /toprated callback chain ─────────────────────────────────────────────────
+// ─── /toprated callbacks ─────────────────────────────────────────────────────
 
 bot.action(/^topregion:(.+)$/, async (ctx) => {
   await handleTopRatedRegion(ctx, ctx.match[1]);
   await ctx.answerCbQuery();
 });
 
-// ─── /save callback chain ─────────────────────────────────────────────────────
+// ─── /save callbacks ─────────────────────────────────────────────────────────
 
 bot.action(/^saveregion:(.+)$/, async (ctx) => {
   await handleSaveRegion(ctx, ctx.match[1]);
@@ -118,31 +115,28 @@ bot.action(/^savevibe:(.+)$/, async (ctx) => {
   await ctx.answerCbQuery();
 });
 
-// ─── Free text handler ────────────────────────────────────────────────────────
-// Catches plain text messages — used in /save wizard, or as /cravings shortcut
+// ─── Free text ───────────────────────────────────────────────────────────────
 
 bot.on('text', async (ctx) => {
   const text = ctx.message.text.trim();
 
-  // If user is in /save flow, route text there
   if (isInSaveFlow(ctx.from.id)) {
     const handled = await handleSaveText(ctx, text);
     if (handled) return;
   }
 
-  // Otherwise treat as a /cravings natural language query
   if (!text.startsWith('/')) {
     await handleCravings(ctx, text);
   }
 });
 
-// ─── Error handler ─────────────────────────────────────────────────────────────
+// ─── Error handler ────────────────────────────────────────────────────────────
 
 bot.catch((err, ctx) => {
   console.error(`Bot error for ${ctx.updateType}:`, err);
 });
 
-// ─── Start ─────────────────────────────────────────────────────────────────────
+// ─── Start ────────────────────────────────────────────────────────────────────
 
 bot.launch().then(() => {
   console.log('🍜 SG Food Bot is running...');
@@ -151,6 +145,5 @@ bot.launch().then(() => {
   process.exit(1);
 });
 
-// Graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
