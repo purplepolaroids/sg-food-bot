@@ -102,4 +102,4 @@ bot.on('text', async (ctx) => {
   const text = ctx.message.text?.trim();
   if (!text || text.startsWith('/')) return;
 
-  if (isInSaveFlow(ctx.f
+  if (isInSaveFlow(ctx.from.id)) {
