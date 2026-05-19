@@ -1,7 +1,7 @@
 // src/bot/commands/random.js
 const { Markup } = require('telegraf');
 const { getRandomFood } = require('../../notion/client');
-const { formatCard } = require('../../formatters/card');
+const { formatCard, escapeMd } = require('../../formatters/card');
 const { REGIONS } = require('../../utils/constants');
 
 function randomRegionKeyboard() {
@@ -33,14 +33,15 @@ async function handleRandomRegion(ctx, region) {
       return;
     }
 
-    const msg = `🎲 *Tonight you\\'re going to\\.\\.\\.*\n\n${formatCard(place)}`;
+    const card = formatCard(place);
+    const msg = `🎲 *Tonight, you should go to\\.\\.\\.*\n\n${card}`;
     await ctx.editMessageText(msg, {
       parse_mode: 'MarkdownV2',
       disable_web_page_preview: true
     });
   } catch (err) {
-    console.error('/random error:', err);
-    await ctx.editMessageText('❌ Something went wrong\\.', { parse_mode: 'MarkdownV2' });
+    console.error('/random error:', err.message);
+    await ctx.editMessageText('❌ Something went wrong\\. Try again\\!', { parse_mode: 'MarkdownV2' });
   }
 }
 

@@ -11,11 +11,15 @@ const {
   handleSaveCuisine, handleSaveRating, handleSaveRevisit,
   handleSaveVibe, isInSaveFlow
 } = require('./commands/save');
-const { escapeMd } = require('../formatters/card');
+
+if (!process.env.TELEGRAM_BOT_TOKEN) {
+  console.error('TELEGRAM_BOT_TOKEN is not set!');
+  process.exit(1);
+}
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
-// ─── Commands ────────────────────────────────────────────────────────────────
+// ─── Commands ─────────────────────────────────────────────────────────────────
 
 bot.command('start', async (ctx) => {
   await ctx.reply(
@@ -36,112 +40,98 @@ bot.command('toprated', startTopRated);
 bot.command('save', startSave);
 
 bot.command('cravings', async (ctx) => {
-  const text = ctx.message.text.replace('/cravings', '').trim();
-  if (!text) {
-    await ctx.reply(
-      '💬 Tell me what you\'re craving\\!\n\nExamples:\n• _I want ramen_\n• _cheap supper near Central_\n• _aesthetic cafe to work at_\n• _starving, something hearty_',
-      { parse_mode: 'MarkdownV2' }
-    );
-    return;
-  }
+  const text = ctx.message.text.replace(/^\/cravings\S*\s*/i, '').trim();
   await handleCravings(ctx, text);
 });
 
-// ─── /eat callbacks ──────────────────────────────────────────────────────────
+// ─── /eat callbacks ───────────────────────────────────────────────────────────
 
 bot.action(/^eatregion:(.+)$/, async (ctx) => {
-  await handleRegion(ctx, ctx.match[1]);
-  await ctx.answerCbQuery();
+  try { await handleRegion(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
+  await ctx.answerCbQuery().catch(() => {});
 });
-
 bot.action(/^eatprice:(.+)$/, async (ctx) => {
-  await handlePrice(ctx, ctx.match[1]);
-  await ctx.answerCbQuery();
+  try { await handlePrice(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
+  await ctx.answerCbQuery().catch(() => {});
 });
-
 bot.action(/^eatcuisine:(.+)$/, async (ctx) => {
-  await handleCuisine(ctx, ctx.match[1]);
-  await ctx.answerCbQuery();
+  try { await handleCuisine(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
+  await ctx.answerCbQuery().catch(() => {});
 });
-
 bot.action(/^eathunger:(.+)$/, async (ctx) => {
-  await handleHunger(ctx, ctx.match[1]);
-  await ctx.answerCbQuery();
+  try { await handleHunger(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
+  await ctx.answerCbQuery().catch(() => {});
 });
 
-// ─── /random callbacks ───────────────────────────────────────────────────────
+// ─── /random callbacks ────────────────────────────────────────────────────────
 
 bot.action(/^randomregion:(.+)$/, async (ctx) => {
-  await handleRandomRegion(ctx, ctx.match[1]);
-  await ctx.answerCbQuery();
+  try { await handleRandomRegion(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
+  await ctx.answerCbQuery().catch(() => {});
 });
 
-// ─── /toprated callbacks ─────────────────────────────────────────────────────
+// ─── /toprated callbacks ──────────────────────────────────────────────────────
 
 bot.action(/^topregion:(.+)$/, async (ctx) => {
-  await handleTopRatedRegion(ctx, ctx.match[1]);
-  await ctx.answerCbQuery();
+  try { await handleTopRatedRegion(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
+  await ctx.answerCbQuery().catch(() => {});
 });
 
-// ─── /save callbacks ─────────────────────────────────────────────────────────
+// ─── /save callbacks ──────────────────────────────────────────────────────────
 
 bot.action(/^saveregion:(.+)$/, async (ctx) => {
-  await handleSaveRegion(ctx, ctx.match[1]);
-  await ctx.answerCbQuery();
+  try { await handleSaveRegion(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
+  await ctx.answerCbQuery().catch(() => {});
 });
-
 bot.action(/^saveprice:(.+)$/, async (ctx) => {
-  await handleSavePrice(ctx, ctx.match[1]);
-  await ctx.answerCbQuery();
+  try { await handleSavePrice(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
+  await ctx.answerCbQuery().catch(() => {});
 });
-
 bot.action(/^savecuisine:(.+)$/, async (ctx) => {
-  await handleSaveCuisine(ctx, ctx.match[1]);
-  await ctx.answerCbQuery();
+  try { await handleSaveCuisine(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
+  await ctx.answerCbQuery().catch(() => {});
 });
-
 bot.action(/^rating:(\d+)$/, async (ctx) => {
-  await handleSaveRating(ctx, ctx.match[1]);
-  await ctx.answerCbQuery();
+  try { await handleSaveRating(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
+  await ctx.answerCbQuery().catch(() => {});
 });
-
 bot.action(/^saverevisit:(yes|no)$/, async (ctx) => {
-  await handleSaveRevisit(ctx, ctx.match[1]);
-  await ctx.answerCbQuery();
+  try { await handleSaveRevisit(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
+  await ctx.answerCbQuery().catch(() => {});
 });
-
 bot.action(/^savevibe:(.+)$/, async (ctx) => {
-  await handleSaveVibe(ctx, ctx.match[1]);
-  await ctx.answerCbQuery();
+  try { await handleSaveVibe(ctx, ctx.match[1]); } catch (e) { console.error(e.message); }
+  await ctx.answerCbQuery().catch(() => {});
 });
 
-// ─── Free text ───────────────────────────────────────────────────────────────
+// ─── Free text ────────────────────────────────────────────────────────────────
 
 bot.on('text', async (ctx) => {
-  const text = ctx.message.text.trim();
+  const text = ctx.message.text?.trim();
+  if (!text || text.startsWith('/')) return;
 
   if (isInSaveFlow(ctx.from.id)) {
-    const handled = await handleSaveText(ctx, text);
+    const handled = await handleSaveText(ctx, text).catch(() => false);
     if (handled) return;
   }
 
-  if (!text.startsWith('/')) {
-    await handleCravings(ctx, text);
-  }
+  await handleCravings(ctx, text);
 });
 
-// ─── Error handler ────────────────────────────────────────────────────────────
+// ─── Global error handler ─────────────────────────────────────────────────────
 
 bot.catch((err, ctx) => {
-  console.error(`Bot error for ${ctx.updateType}:`, err);
+  console.error(`Unhandled bot error [${ctx?.updateType}]:`, err.message);
 });
 
-// ─── Start ────────────────────────────────────────────────────────────────────
+// ─── Launch ───────────────────────────────────────────────────────────────────
 
-bot.launch().then(() => {
+bot.launch({
+  dropPendingUpdates: true  // clears queued messages on startup — fixes the 409 conflict
+}).then(() => {
   console.log('🍜 SG Food Bot is running...');
 }).catch(err => {
-  console.error('Failed to launch bot:', err);
+  console.error('Failed to launch:', err.message);
   process.exit(1);
 });
 

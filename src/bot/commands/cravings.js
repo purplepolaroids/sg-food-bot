@@ -4,19 +4,38 @@ const { parseIntent, scoreResults } = require('../../ai/parseIntent');
 const { formatList, escapeMd } = require('../../formatters/card');
 
 async function handleCravings(ctx, text) {
-  const thinking = await ctx.reply('🤖 Reading your cravings\\.\\.\\.', { parse_mode: 'MarkdownV2' });
+  // Guard: empty text
+  if (!text || text.trim().length === 0) {
+    await ctx.reply(
+      '💬 What are you craving\\? Try something like:\n\n_cheap supper near Central_\n_Japanese ramen_\n_aesthetic cafe to work at_',
+      { parse_mode: 'MarkdownV2' }
+    );
+    return;
+  }
+
+  let thinking;
+  try {
+    thinking = await ctx.reply('🤖 Reading your cravings\\.\\.\\.', { parse_mode: 'MarkdownV2' });
+  } catch (e) {
+    return;
+  }
+
+  const editThinking = async (text, extra = {}) => {
+    try {
+      await ctx.telegram.editMessageText(ctx.chat.id, thinking.message_id, undefined, text, {
+        parse_mode: 'MarkdownV2',
+        ...extra
+      });
+    } catch (e) {
+      // If edit fails (e.g. message too old), send a new one
+      try { await ctx.reply(text, { parse_mode: 'MarkdownV2', ...extra }); } catch (_) {}
+    }
+  };
 
   try {
     const intent = await parseIntent(text);
 
-    // Show what we understood
-    await ctx.telegram.editMessageText(
-      ctx.chat.id,
-      thinking.message_id,
-      undefined,
-      `🤖 *I\'m reading:* ${escapeMd(intent.summary)}\n\n🔍 Searching\\.\\.\\.`,
-      { parse_mode: 'MarkdownV2' }
-    );
+    await editThinking(`🤖 *I'm reading:* ${escapeMd(intent.summary)}\n\n🔍 Searching\\.\\.\\.`);
 
     const results = await queryFood({
       region: intent.region,
@@ -32,34 +51,18 @@ async function handleCravings(ctx, text) {
     const top = scored.slice(0, 3);
 
     if (top.length === 0) {
-      await ctx.telegram.editMessageText(
-        ctx.chat.id,
-        thinking.message_id,
-        undefined,
-        `🤖 *I was looking for:* ${escapeMd(intent.summary)}\n\n😔 Nothing matched\\. Try /eat to use manual filters, or /save to add new spots\\!`,
-        { parse_mode: 'MarkdownV2' }
+      await editThinking(
+        `🤖 *Looking for:* ${escapeMd(intent.summary)}\n\n😔 Nothing matched\\. Try /eat for manual filters or /save to add new spots\\!`
       );
       return;
     }
 
-    const header = `🤖 *${escapeMd(intent.summary)}*`;
-    const msg = `${header}\n\n${formatList(top)}`;
-    await ctx.telegram.editMessageText(
-      ctx.chat.id,
-      thinking.message_id,
-      undefined,
-      msg,
-      { parse_mode: 'MarkdownV2', disable_web_page_preview: true }
-    );
+    const msg = `🤖 *${escapeMd(intent.summary)}*\n\n${formatList(top)}`;
+    await editThinking(msg, { disable_web_page_preview: true });
+
   } catch (err) {
-    console.error('/cravings error:', err);
-    await ctx.telegram.editMessageText(
-      ctx.chat.id,
-      thinking.message_id,
-      undefined,
-      '❌ Something went wrong\\. Try again\\!',
-      { parse_mode: 'MarkdownV2' }
-    );
+    console.error('/cravings error:', err.message);
+    await editThinking('❌ Something went wrong\\. Try again or use /eat for manual filters\\!');
   }
 }
 
