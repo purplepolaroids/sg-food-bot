@@ -26,7 +26,7 @@ function eatRegionKeyboard() {
 }
 
 function eatPriceKeyboard() {
-  const prices = ['Under $10', '$10\u201320', '$20\u201330', '$30\u201350', '$50\u2013100', '$100+'];
+  const prices = ['Under $10', '$10–20', '$20–30', '$30–50', '$50–100', '$100+'];
   const buttons = prices.map(p => Markup.button.callback(p, `eatprice:${p}`));
   buttons.push(Markup.button.callback('💸 Any budget', 'eatprice:any'));
   return Markup.inlineKeyboard(chunk(buttons, 2));
@@ -57,8 +57,7 @@ function eatHungerKeyboard() {
 
 async function startEat(ctx) {
   clearSession(ctx.from.id);
-  await ctx.reply('🍽 *Let\'s find you something to eat\\!*\n\nWhere are you right now?', {
-    parse_mode: 'MarkdownV2',
+  await ctx.reply('🍽 Let\'s find you something to eat!\n\nWhere are you right now?', {
     ...eatRegionKeyboard()
   });
 }
@@ -67,8 +66,7 @@ async function handleRegion(ctx, region) {
   const session = getSession(ctx.from.id);
   session.region = region;
   const label = region === 'any' ? 'Anywhere' : region;
-  await ctx.editMessageText(`📍 *${escapeMd(label)}*\n\nWhat's your budget per pax?`, {
-    parse_mode: 'MarkdownV2',
+  await ctx.editMessageText(`📍 ${label}\n\nWhat's your budget per pax?`, {
     ...eatPriceKeyboard()
   });
 }
@@ -77,8 +75,7 @@ async function handlePrice(ctx, price) {
   const session = getSession(ctx.from.id);
   session.priceRange = price;
   const label = price === 'any' ? 'Any budget' : price;
-  await ctx.editMessageText(`💰 *${escapeMd(label)}*\n\nAny cuisine in mind?`, {
-    parse_mode: 'MarkdownV2',
+  await ctx.editMessageText(`💰 ${label}\n\nAny cuisine in mind?`, {
     ...eatCuisineKeyboard()
   });
 }
@@ -87,8 +84,7 @@ async function handleCuisine(ctx, cuisine) {
   const session = getSession(ctx.from.id);
   session.cuisine = cuisine;
   const label = cuisine === 'any' ? 'Any cuisine' : cuisine;
-  await ctx.editMessageText(`🍴 *${escapeMd(label)}*\n\nHow hungry are you?`, {
-    parse_mode: 'MarkdownV2',
+  await ctx.editMessageText(`🍴 ${label}\n\nHow hungry are you?`, {
     ...eatHungerKeyboard()
   });
 }
@@ -97,7 +93,7 @@ async function handleHunger(ctx, hunger) {
   const session = getSession(ctx.from.id);
   session.hunger = hunger;
 
-  await ctx.editMessageText('🔍 Searching\\.\\.\\.', { parse_mode: 'MarkdownV2' });
+  await ctx.editMessageText('🔍 Searching...');
 
   try {
     const results = await queryFood({
@@ -112,17 +108,22 @@ async function handleHunger(ctx, hunger) {
     const top = scored.slice(0, 3);
 
     if (top.length === 0) {
-      await ctx.editMessageText(
-        '😔 No exact matches found\\. Try broader filters with /eat, or use /random for a surprise\\!',
-        { parse_mode: 'MarkdownV2' }
-      );
+      await ctx.editMessageText('😔 No exact matches found. Try broader filters with /eat, or use /random for a surprise!');
     } else {
-      const msg = formatList(top, `Found ${top.length} spot${top.length > 1 ? 's' : ''} for you 🍜`);
-      await ctx.editMessageText(msg, { parse_mode: 'MarkdownV2', disable_web_page_preview: true });
+      const lines = top.map((p, i) => {
+        const stars = '⭐'.repeat(Math.min(Math.round((p.personalRating || 0) / 2), 5));
+        const price = p.priceRange || '—';
+        const area = [p.area, p.region].filter(Boolean).join(', ');
+        const cuisine = (p.cuisines || []).slice(0, 2).join(', ');
+        const dishes = p.recommendedDishes ? `👌 ${p.recommendedDishes.substring(0, 60)}` : '';
+        const maps = p.mapsLink ? p.mapsLink : '';
+        return `${i+1}. ${p.name} ${stars}\n📍 ${area}\n💰 ${price}\n🍽 ${cuisine}\n${dishes}\n${maps}`.trim();
+      });
+      await ctx.editMessageText(`🍜 Found ${top.length} spot${top.length > 1 ? 's' : ''} for you!\n\n${lines.join('\n\n---\n\n')}`, { disable_web_page_preview: true });
     }
   } catch (err) {
     console.error('/eat error:', err.message);
-    await ctx.editMessageText('❌ Something went wrong\\. Try again with /eat\\.', { parse_mode: 'MarkdownV2' });
+    await ctx.editMessageText('❌ Something went wrong. Try again with /eat.');
   }
 
   clearSession(ctx.from.id);
